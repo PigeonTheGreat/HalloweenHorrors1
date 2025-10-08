@@ -19,7 +19,7 @@ public class Projectile : MonoBehaviour
         rbody.AddForce(direction * force);   
     }
 
-    private void OnTriggerEnter2D (Collider2D collision)
+    private void OnCollisionEnter2D (Collision2D collision)
     {
         Destroy(gameObject);
     }
