@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+
+    //Declaring variables.
     public float speed;
     public float JumpHeight;
+    public int lives = 3;
     private Rigidbody2D rb;
     private bool jumping = false;
     private Animator animator;
@@ -16,21 +19,39 @@ public class Player : MonoBehaviour
     private float powerUpTimeRemaining = 5;
     private float DefaultPowerUpTime = 5;
     private Vector2 startPosition;
+    private AudioSource _audio;
+    private bool isPlaying = false;
+    
 
     // Start is called before the first frame update
     void Start()
     {
+        //Calling components.
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         startPosition = transform.position;
+        _audio = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        //Moving left and right
         float move = Input.GetAxis("Horizontal");
         Vector2 position = transform.position;
-        if(position.y < -8.5)
+
+        if(move != 0 && !isPlaying && !jumping)
+        {
+            _audio.Play();
+            isPlaying = true;
+        }
+        else if ((move == 0 && isPlaying) || jumping)
+        {
+            _audio.Pause();
+            isPlaying = false;
+        }
+
+        if (position.y < -8.5)
         {
             position = startPosition;
         }
@@ -68,18 +89,34 @@ public class Player : MonoBehaviour
 
     }
 
+    //Taking a powerup item.
     public void OnTriggerEnter2D(Collider2D collision)
     {
-        if(!isPowerUp && collision.gameObject.tag == "SpeedPowerUp")
+        if(!isPowerUp && collision.gameObject.tag == "SpeedPowerUp") //Declaring the SpeedPowerUp as the object that gives Player the power up.
         {
-            Destroy(collision.gameObject);
-            speed = speed * 2;
-            isPowerUp = true;
-            animator.speed *= 2;
+            Destroy(collision.gameObject); //Destroying the object, not letting player collect it again.
+            speed = speed * 2; //Implementing power up
+            isPowerUp = true; //Stating that the powerup is on so that you cant double up on them.
+            animator.speed *= 2; //Speeding up the animations.
         }
+
+        if(collision.gameObject.tag == "Checkpoint")
+        {
+            startPosition = transform.position;
+        }
+
+        //Taking away lives as the Player gets hit by the projectiles.
+        if(collision.gameObject.name.Contains("EnemyProjectile")) //Making the EnemyProjectile object the object that damages the player.
+        {
+            lives--; //Taking life awyay
+            Debug.Log(lives); //Displays action in console!!!
+            ui.UpdateLives(lives); //Calling in the UpdateLives method from UIManager.
+            transform.position = startPosition; //Takes the player back to the beginning.
+        }
+
     }
 
-    private void updateAnimator(float move)
+    private void updateAnimator(float move) //Adding values for direction and movement to help change the animations.
     {
         animator.SetFloat("Move", move);
         if(move > 0)
@@ -97,6 +134,7 @@ public class Player : MonoBehaviour
         jumping = false;
     }
 
+    //Increasing score with every Pumpkin collected.
     public void CollectPumpkin()
     {
         score++;
